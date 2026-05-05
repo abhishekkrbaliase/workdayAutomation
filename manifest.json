@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Workday Autofill – Abhishek Kumar",
+  "version": "1.1",
+  "description": "Auto-fills Work Experience and Education in Workday job applications",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://*.myworkdayjobs.com/*",
+    "https://*.workday.com/*",
+    "https://*.wd1.myworkdayjobs.com/*",
+    "https://*.wd3.myworkdayjobs.com/*",
+    "https://*.wd5.myworkdayjobs.com/*",
+    "https://*.wd9.myworkdayjobs.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.myworkdayjobs.com/*",
+        "https://*.workday.com/*",
+        "https://*.wd1.myworkdayjobs.com/*",
+        "https://*.wd3.myworkdayjobs.com/*",
+        "https://*.wd5.myworkdayjobs.com/*",
+        "https://*.wd9.myworkdayjobs.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

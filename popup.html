@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      color: #1a1a2e;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1a6b96, #3b9cc9);
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .header h1 { font-size: 15px; font-weight: 700; }
+    .header p  { font-size: 11px; opacity: 0.85; margin-top: 3px; }
+
+    .body { padding: 14px; }
+
+    .section-card {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      padding: 8px 12px 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .item-list {
+      padding: 6px 0;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      padding: 5px 12px;
+      font-size: 12px;
+      gap: 8px;
+    }
+
+    .item-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #3b9cc9;
+      flex-shrink: 0;
+    }
+
+    .item-text { flex: 1; }
+    .item-text strong { display: block; font-size: 12px; }
+    .item-text span { color: #888; font-size: 11px; }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1a6b96, #3b9cc9);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #1a6b96;
+      border: 1px solid #3b9cc9;
+    }
+
+    .btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .status {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.info    { background: #e8f4fd; color: #1a6b96; border: 1px solid #b3d9f0; }
+    .status.success { background: #e8f8ef; color: #1a7a3c; border: 1px solid #b3e6c8; }
+    .status.error   { background: #fdecea; color: #c0392b; border: 1px solid #f5b8b5; }
+
+    .progress-row {
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+      margin-bottom: 6px;
+      display: none;
+    }
+    .progress-row.show { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      padding: 8px 14px 12px;
+      font-size: 10px;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚡ Workday Autofill</h1>
+    <p>Abhishek Kumar · abhishekkrbaliase@gmail.com</p>
+  </div>
+
+  <div class="body">
+    <div id="status" class="status"></div>
+    <div id="progress" class="progress-row"></div>
+
+    <div class="section-card">
+      <div id="work-title" class="section-title">💼 Work Experience (7 entries)</div>
+      <!-- <div class="item-list">
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Staff Engineer</strong><span>OneStudy · Aug 2025 – Apr 2026</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Acting EM & Staff Engineer</strong><span>AllenDigital · Dec 2023 – Jul 2025</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Principal Eng. Manager</strong><span>Nurture.Farm · Jan 2021 – Dec 2023</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Tech Lead</strong><span>Walmart · Aug 2019 – Jan 2021</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Software Developer 2</strong><span>Ola Cabs · May 2017 – Aug 2019</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Analyst 2</strong><span>Goldman Sachs · Aug 2015 – Apr 2017</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>Senior Software Engineer</strong><span>Manhattan Associates · May 2013 – Jul 2015</span></div></div> 
+      </div>-->
+      <div id="work-list" class="item-list">
+        <!-- This will be populated by JS -->
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div id="edu-title" class="section-title">🎓 Education (2 entries)</div>
+      <!-- <div class="item-list">
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>PGD in Advanced Computing</strong><span>CDAC · 2013</span></div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text"><strong>B.E. in Computer Science</strong><span>SJCIT, VTU · 2008 – 2012</span></div></div>
+      </div> -->
+      <div id="edu-list" class="item-list">
+          <!-- This will be populated by JS -->
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btnAll">
+      ⚡ Fill Everything
+    </button>
+    <button class="btn btn-secondary" id="btnWork">
+      💼 Fill Work Experience Only
+    </button>
+    <button class="btn btn-secondary" id="btnEdu">
+      🎓 Fill Education Only
+    </button>
+  </div>
+
+  <div class="footer">
+    Make sure you're on a Workday application page before filling.
+  </div>
+
+  <script src="data.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
