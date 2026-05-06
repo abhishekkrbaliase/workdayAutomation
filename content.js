@@ -83,13 +83,19 @@ function findSectionByHeading(headingText) {
   return null;
 }
 
-// Inside a section, get all entry sub-groups (Work Experience 1, Work Experience 2…)
+// Inside a section, get all DIRECT entry sub-groups.
+// e.g. "Work History (Optional) 1", "Education (Optional) 1"
+// Excludes deeply-nested role=group elements like dateInputWrapper.
 function getEntryGroups(sectionGroup) {
   return Array.from(sectionGroup.querySelectorAll('[role="group"][aria-labelledby]'))
     .filter(g => {
+      // The nearest role=group ancestor must be the section itself — not an entry panel
+      const nearestGroupParent = g.parentElement.closest('[role="group"]');
+      if (nearestGroupParent !== sectionGroup) return false;
+      // Entry panel labels always end with a number: "Work History (Optional) 1"
       const labelId = g.getAttribute('aria-labelledby');
       const labelEl = document.getElementById(labelId);
-      return labelEl && /\d/.test(labelEl.textContent);
+      return labelEl && /\d+\s*$/.test(labelEl.textContent.trim());
     });
 }
 
@@ -166,18 +172,31 @@ async function fillAllWorkExperience(entries) {
 
   const weSection = findSectionByHeading('Work Experience') || findSectionByHeading('Work History');
   if (!weSection) {
-    console.error('[Workday Autofill] Could not find Work Experience section');
+    console.error('[Workday Autofill] Could not find Work Experience/History section');
     return { filled: 0, failed: entries.length };
   }
 
   for (let i = 0; i < entries.length; i++) {
     console.log(`[Workday Autofill] Adding WE ${i + 1}/${entries.length}…`);
-    const clicked = clickAddInSection(weSection);
-    if (!clicked) { status.failed++; continue; }
-    await sleep(900);
 
-    const groups = getEntryGroups(weSection);
-    const entryGroup = groups[groups.length - 1];
+    // Workday pre-creates entry 1 when you first open the section.
+    // Reuse any existing empty slots before clicking "Add Another".
+    const existingGroups = getEntryGroups(weSection);
+    let entryGroup = null;
+
+    if (i < existingGroups.length) {
+      // Slot already exists (pre-created by Workday) — fill it directly
+      entryGroup = existingGroups[i];
+      console.log(`[Workday Autofill] Reusing existing slot ${i + 1}`);
+    } else {
+      // Need a new slot — click Add Another and wait for it to appear
+      const clicked = clickAddInSection(weSection);
+      if (!clicked) { status.failed++; continue; }
+      await sleep(900);
+      const groups = getEntryGroups(weSection);
+      entryGroup = groups[groups.length - 1];
+    }
+
     if (!entryGroup) { status.failed++; continue; }
 
     try {
@@ -279,12 +298,22 @@ async function fillAllEducation(entries) {
 
   for (let i = 0; i < entries.length; i++) {
     console.log(`[Workday Autofill] Adding Education ${i + 1}/${entries.length}…`);
-    const clicked = clickAddInSection(eduSection);
-    if (!clicked) { status.failed++; continue; }
-    await sleep(900);
 
-    const groups = getEntryGroups(eduSection);
-    const entryGroup = groups[groups.length - 1];
+    // Reuse pre-existing empty slot before clicking Add Another
+    const existingGroups = getEntryGroups(eduSection);
+    let entryGroup = null;
+
+    if (i < existingGroups.length) {
+      entryGroup = existingGroups[i];
+      console.log(`[Workday Autofill] Reusing existing education slot ${i + 1}`);
+    } else {
+      const clicked = clickAddInSection(eduSection);
+      if (!clicked) { status.failed++; continue; }
+      await sleep(900);
+      const groups = getEntryGroups(eduSection);
+      entryGroup = groups[groups.length - 1];
+    }
+
     if (!entryGroup) { status.failed++; continue; }
 
     try {
