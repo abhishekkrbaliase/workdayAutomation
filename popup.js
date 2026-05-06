@@ -86,32 +86,36 @@ async function sendFill(action, data) {
     return;
   }
 
+  // Send the message — content script responds immediately with {started:true}
+  // then pushes the real result back via chrome.runtime.sendMessage once done.
   chrome.tabs.sendMessage(tab.id, { action, data }, response => {
-    setButtonsDisabled(false);
-    hideProgress();
-
-    if (chrome.runtime.lastError) {
-      showStatus('❌ ' + chrome.runtime.lastError.message, 'error');
-      return;
+    if (chrome.runtime.lastError || !response?.started) {
+      setButtonsDisabled(false);
+      showStatus('❌ Could not reach page. Reload tab and try again.', 'error');
     }
-    if (!response) {
-      showStatus('⚠️ No response — form may have partially filled. Check the page.', 'error');
-      return;
-    }
-
-    if (action === 'fillAll') {
-      const we = response.workExperience;
-      const edu = response.education;
-      showStatus(
-        `✅ Done! Work: ${we.filled} filled${we.failed ? ', ' + we.failed + ' failed' : ''} · ` +
-        `Edu: ${edu.filled} filled${edu.failed ? ', ' + edu.failed + ' failed' : ''}`,
-        'success'
-      );
-    } else {
-      showStatus(`✅ Done! ${response.filled} filled${response.failed ? ', ' + response.failed + ' failed' : ''}.`, 'success');
-    }
+    // Buttons stay disabled — re-enabled when result arrives below
   });
 }
+
+// Listen for the fill result pushed back from the content script
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type !== 'fillResult') return;
+  setButtonsDisabled(false);
+  hideProgress();
+
+  const { action, result } = msg;
+  if (action === 'fillAll') {
+    const we = result.workExperience;
+    const edu = result.education;
+    showStatus(
+      `✅ Done! Work: ${we.filled} filled${we.failed ? ', ' + we.failed + ' failed' : ''} · ` +
+      `Edu: ${edu.filled} filled${edu.failed ? ', ' + edu.failed + ' failed' : ''}`,
+      'success'
+    );
+  } else {
+    showStatus(`✅ Done! ${result.filled} filled${result.failed ? ', ' + result.failed + ' failed' : ''}.`, 'success');
+  }
+});
 
 document.getElementById('btnAll').addEventListener('click',  () => sendFill('fillAll',            RESUME_DATA));
 document.getElementById('btnWork').addEventListener('click', () => sendFill('fillWorkExperience', RESUME_DATA.workExperience));

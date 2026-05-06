@@ -75,8 +75,9 @@ function findSectionByHeading(headingText) {
     const labelId = g.getAttribute('aria-labelledby');
     if (!labelId) continue;
     const labelEl = document.getElementById(labelId);
+    if (!labelEl) continue;  // guard: aria-labelledby may point to non-existent ID
     const labelText = labelEl.textContent.trim().toLowerCase();
-    if (labelEl && labelText.includes(headingText.toLowerCase())) {
+    if (labelText.includes(headingText.toLowerCase())) {
       return g;
     }
   }
@@ -335,22 +336,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ status: 'ready' });
     return;
   }
+
+  // For all fill actions, respond immediately with "started" so the popup's
+  // message channel doesn't time out during long fills (7+ entries × ~1.5s each).
+  // The actual result is pushed back via chrome.runtime.sendMessage once done.
   if (msg.action === 'fillWorkExperience') {
-    fillAllWorkExperience(msg.data).then(sendResponse);
-    return true;
+    sendResponse({ started: true });
+    fillAllWorkExperience(msg.data).then(result => {
+      chrome.runtime.sendMessage({ type: 'fillResult', action: 'fillWorkExperience', result });
+    });
+    return; // channel already closed by sendResponse above
   }
+
   if (msg.action === 'fillEducation') {
-    fillAllEducation(msg.data).then(sendResponse);
-    return true;
+    sendResponse({ started: true });
+    fillAllEducation(msg.data).then(result => {
+      chrome.runtime.sendMessage({ type: 'fillResult', action: 'fillEducation', result });
+    });
+    return;
   }
+
   if (msg.action === 'fillAll') {
+    sendResponse({ started: true });
     (async () => {
       const weStatus  = await fillAllWorkExperience(msg.data.workExperience);
       await sleep(800);
       const eduStatus = await fillAllEducation(msg.data.education);
-      sendResponse({ workExperience: weStatus, education: eduStatus });
+      chrome.runtime.sendMessage({
+        type: 'fillResult',
+        action: 'fillAll',
+        result: { workExperience: weStatus, education: eduStatus }
+      });
     })();
-    return true;
+    return;
   }
 });
 
